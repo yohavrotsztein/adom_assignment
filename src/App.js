@@ -1,24 +1,48 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from 'react';
+import axios from 'axios';
+import { Container } from '@mui/material';
+// components
+import Header from './components/Header';
+import Content from './components/Content'
+// state management
+import { useAppSelector, useAppDispatch } from './redux/hooks';
+import { getCityWeather } from './redux/city';
+// hooks
+import useGeolocation from './hooks/useGeolocation';
 
-function App() {
+// ----------------------------------------------------------------------
+
+const App = () => {
+
+  const dispatch = useAppDispatch();
+  useGeolocation();
+
+  const currentLocation = useAppSelector((state) => state.city.currentLocation);
+
+  const getCurrentWeather = async (location) => {
+    try {
+      const response = await axios.get(`https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=${process.env.REACT_APP_ACCUWEATHER_KEY}&q=${location}`)
+      dispatch(getCityWeather({
+        locationKey: response.data.Key,
+        cityName: response.data.LocalizedName,
+        countryName: response.data.Country.LocalizedName,
+      }))
+    } catch (error) {
+      console.log(error)
+    }
+  };
+
+  useEffect(() => {
+    if (currentLocation) {
+      getCurrentWeather(currentLocation)
+    }
+  }, [currentLocation])
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <Container sx={{ p: 2, maxWidth: 'none !important' }}>
+        <Header />
+        <Content />
+      </Container>
   );
 }
 
